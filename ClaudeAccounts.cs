@@ -370,10 +370,7 @@ namespace ClaudeAccounts
                     samples = samples.Concat(main.Samples.Where(s => s.Org == folder.Org)).OrderBy(s => s.Time).ToList();
                 rows.Add(Row(folder, samples, i, folder.Account != null && folder.Account == cachedAccount ? cached : none));
             }
-            rows = rows.OrderBy(row => row.Name, StringComparer.OrdinalIgnoreCase).ToList();
-            rows.Insert(0, Row(main, main.Samples.Where(s => s.Org == main.Org).ToList(), 0,
-                main.Account != null && main.Account == cachedAccount ? cached : none));
-            return rows;
+            return rows.OrderBy(row => row.Name, StringComparer.OrdinalIgnoreCase).ToList();
         }
 
         public static void Open(string name)

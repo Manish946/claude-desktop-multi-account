@@ -273,7 +273,7 @@ function Get-Row($label, $data) {
 }
 
 function Show-Accounts {
-    $rows = @(Get-Row '(normal app)' $MainData)
+    $rows = @()
     Get-ChildItem -LiteralPath $Root -Directory -ErrorAction SilentlyContinue |
         ForEach-Object { $rows += Get-Row $_.Name $_.FullName }
     $rows | Format-Table -AutoSize
