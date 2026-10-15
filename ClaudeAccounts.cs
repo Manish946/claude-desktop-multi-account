@@ -128,6 +128,13 @@ namespace ClaudeAccounts
             return name == null ? Paths.MainData : Path.Combine(Paths.Root, name);
         }
 
+        // An account folder holding this file stands for the normal app: it opens the normal
+        // app's own window and data (same sign-in, sessions and projects) instead of its own.
+        public static bool IsNormalApp(string name)
+        {
+            return name != null && File.Exists(Path.Combine(DataDir(name), "ccm-normal-app"));
+        }
+
         public static List<string> Names()
         {
             if (!Directory.Exists(Paths.Root)) return new List<string>();
@@ -164,7 +171,7 @@ namespace ClaudeAccounts
 
         static Folder ReadFolder(string name)
         {
-            var folder = new Folder { Name = name, Dir = DataDir(name) };
+            var folder = new Folder { Name = name, Dir = IsNormalApp(name) ? Paths.MainData : DataDir(name) };
             try
             {
                 var file = Path.Combine(folder.Dir, "plan-usage-history.json");
@@ -366,7 +373,7 @@ namespace ClaudeAccounts
                 var samples = folder.Samples.Where(s => s.Org == folder.Org).ToList();
                 // Numbers this account saved while it was signed in to the normal app count
                 // too, unless several of your windows share the organisation (team seats).
-                if (folder.Org != null && folders.Count(other => other.Org == folder.Org) == 1)
+                if (folder.Org != null && folder.Dir != Paths.MainData && folders.Count(other => other.Org == folder.Org) == 1)
                     samples = samples.Concat(main.Samples.Where(s => s.Org == folder.Org)).OrderBy(s => s.Time).ToList();
                 rows.Add(Row(folder, samples, i, folder.Account != null && folder.Account == cachedAccount ? cached : none));
             }
@@ -375,6 +382,7 @@ namespace ClaudeAccounts
 
         public static void Open(string name)
         {
+            if (IsNormalApp(name)) name = null;
             var start = new ProcessStartInfo(Paths.App) { UseShellExecute = name == null };
             if (name != null)
             {
@@ -465,9 +473,16 @@ namespace ClaudeAccounts
                 {
                     foreach (ManagementObject process in search.Get())
                     {
-                        var match = Regex.Match(Convert.ToString(process["CommandLine"]),
+                        var line = Convert.ToString(process["CommandLine"]);
+                        var match = Regex.Match(line,
                             "--user-data-dir=\"?" + Regex.Escape(Paths.Root) + @"\\([A-Za-z0-9._-]+)", RegexOptions.IgnoreCase);
                         if (match.Success) return match.Groups[1].Value;
+                        // The normal app's own window, started from its package rather than by
+                        // Claude Code (which also runs as claude.exe), belongs to the account
+                        // that stands for it.
+                        if (line.IndexOf("WindowsApps", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                            !line.Contains("--type=") && !line.Contains("--user-data-dir"))
+                            return Accounts.Names().FirstOrDefault(Accounts.IsNormalApp) ?? "";
                     }
                 }
             }

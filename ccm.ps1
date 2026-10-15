@@ -274,8 +274,11 @@ function Get-Row($label, $data) {
 
 function Show-Accounts {
     $rows = @()
-    Get-ChildItem -LiteralPath $Root -Directory -ErrorAction SilentlyContinue |
-        ForEach-Object { $rows += Get-Row $_.Name $_.FullName }
+    Get-ChildItem -LiteralPath $Root -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+        # An account holding ccm-normal-app stands for the normal app and shows its numbers.
+        $data = if (Test-Path -LiteralPath (Join-Path $_.FullName 'ccm-normal-app')) { $MainData } else { $_.FullName }
+        $rows += Get-Row $_.Name $data
+    }
     $rows | Format-Table -AutoSize
 }
 

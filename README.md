@@ -50,6 +50,12 @@ cd claude-desktop-multi-account
 4. Right-click its taskbar icon and choose **Pin to taskbar**. After a restart, click the pinned icons; every window is still signed in.
 5. Open `Claude accounts` from the Start menu for the usage window. You can pin that too.
 
+### Using your normal app for one account
+
+If your normal Claude app is already signed in to one of your accounts, that entry can open the normal app itself, with all its Code sessions, projects, settings and Remote Control, instead of a separate folder. Create an empty file named `ccm-normal-app` in `~\.claude-accounts\<name>`. Its shortcut then opens or brings forward the normal app's window, with that account's taskbar icon, and `claude://` links reach it. Deleting the file makes it a separate window again.
+
+Use this rather than signing in to the same account in a separate window: sessions started in the normal app only show up there as Remote Control sessions, which can't connect while the normal app is closed.
+
 ### Signing in with Google
 
 Google sign-in does not work in the extra windows. It finishes in your browser and returns through a `claude://` link, and Windows always hands that link to the normal Claude app. Use **Continue with email** with the same address instead. When the browser shows a verification code, enter it in the window you are signing in.
