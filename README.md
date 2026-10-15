@@ -29,7 +29,7 @@ The usage window is a small program (`ClaudeAccounts.exe`) that is compiled on y
 ## Install
 
 ```powershell
-git clone https://github.com/Leonxlnx/claude-desktop-multi-account
+git clone https://github.com/Manish946/claude-desktop-multi-account
 cd claude-desktop-multi-account
 .\ccm.cmd install
 ```
@@ -71,6 +71,7 @@ Google sign-in does not work in the extra windows. It finishes in your browser a
 ## How it works
 
 - Each account window is the Claude app started with Chromium's `--user-data-dir` switch, pointing at `~\.claude-accounts\<name>`.
+- Since app 2.42 the normal app keeps its data in `%LOCALAPPDATA%\Claude-Data`, and every new window switches to that folder and hands off to the one already using it, so only one window opens. Account windows are started with `LOCALAPPDATA` in its `\\?\C:\...` form: the same folder, but the app treats it as a network path and keeps the account's own folder. Programs started inside an account window, such as Claude Code, see that form too.
 - Windows groups taskbar buttons by app id. While `ClaudeAccounts.exe` runs, it gives each account window, and its shortcut, its own id. That way each account gets a separate, pinnable button.
 - Usage comes from the `plan-usage-history.json` file the app writes in each data folder. A window counts as open while the app holds that folder's `lockfile`.
 - A limit only falls when its window resets, so the oldest saved number in an unbroken run marks a moment the current window already existed; it ends at most five hours (or seven days) later. Exact reset times come from the `cachedUsageUtilization` entry Claude Code keeps in `~\.claude.json`, when it belongs to that account.

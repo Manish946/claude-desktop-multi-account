@@ -14,8 +14,12 @@ $ErrorActionPreference = 'Stop'
 
 $Root = if ($env:CCM_HOME) { $env:CCM_HOME } else { Join-Path $HOME '.claude-accounts' }
 $Shortcuts = Join-Path ([Environment]::GetFolderPath('Programs')) 'Claude accounts'
-$App = Join-Path $env:LOCALAPPDATA 'Microsoft\WindowsApps\claude-desktop.exe'
-$MainData = Join-Path $env:APPDATA 'Claude'
+$LocalAppData = [Environment]::GetFolderPath('LocalApplicationData')
+$App = Join-Path $LocalAppData 'Microsoft\WindowsApps\claude-desktop.exe'
+# Since app 2.42 the normal app keeps its data in %LOCALAPPDATA%\Claude-Data\<package family>.
+$MainData = (Get-ChildItem -LiteralPath (Join-Path $LocalAppData 'Claude-Data') -Directory -Filter 'claude_*' -ErrorAction SilentlyContinue |
+    Select-Object -First 1).FullName
+if (-not $MainData) { $MainData = Join-Path $env:APPDATA 'Claude' }
 $Exe = Join-Path $PSScriptRoot 'ClaudeAccounts.exe'
 $Reserved = 'add', 'list', 'ls', 'remove', 'rm', 'rename', 'shortcuts', 'usage', 'build', 'install', 'help'
 $Colors = '#2563EB', '#16A34A', '#7C3AED', '#DB2777', '#0D9488', '#475569', '#B45309', '#DC2626'

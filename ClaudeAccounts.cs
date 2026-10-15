@@ -36,10 +36,13 @@ namespace ClaudeAccounts
     {
         static readonly string Home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         public static readonly string Root = Environment.GetEnvironmentVariable("CCM_HOME") ?? Path.Combine(Home, ".claude-accounts");
+        public static readonly string LocalAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        // Since app 2.42 the normal app keeps its data in %LOCALAPPDATA%\Claude-Data\<package family>.
         public static readonly string MainData =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Claude");
-        public static readonly string App =
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Microsoft\WindowsApps\claude-desktop.exe");
+            (Directory.Exists(Path.Combine(LocalAppData, "Claude-Data"))
+                ? Directory.GetDirectories(Path.Combine(LocalAppData, "Claude-Data"), "claude_*").FirstOrDefault() : null)
+            ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Claude");
+        public static readonly string App = Path.Combine(LocalAppData, @"Microsoft\WindowsApps\claude-desktop.exe");
         public static readonly string CodeState = Path.Combine(Home, ".claude.json");
         public static readonly string Exe = Process.GetCurrentProcess().MainModule.FileName;
 
@@ -375,8 +378,16 @@ namespace ClaudeAccounts
 
         public static void Open(string name)
         {
-            var start = new ProcessStartInfo(Paths.App) { UseShellExecute = true };
-            if (name != null) start.Arguments = "--user-data-dir=\"" + DataDir(name) + "\"";
+            var start = new ProcessStartInfo(Paths.App) { UseShellExecute = name == null };
+            if (name != null)
+            {
+                start.Arguments = "--user-data-dir=\"" + DataDir(name) + "\"";
+                // Since app 2.42 every launch switches to the normal app's folder under
+                // %LOCALAPPDATA%\Claude-Data and hands off to the window already using it,
+                // so only one window ever opens. The app skips that switch when LOCALAPPDATA
+                // looks like a network path; the \\?\ form is one, and is still the same folder.
+                start.EnvironmentVariables["LOCALAPPDATA"] = @"\\?\" + Paths.LocalAppData;
+            }
             Process.Start(start);
         }
     }
